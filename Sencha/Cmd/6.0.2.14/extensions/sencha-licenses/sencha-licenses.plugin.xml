@@ -1,0 +1,128 @@
+<!--
+    Copyright (c) 2014. Sencha Inc.
+    
+    This file is a Sencha Cmd plugin that reports framework licenses.
+-->
+<project name="sencha-license-plugin" basedir=".">
+    <target name="xxx-init-plugin">
+        <!-- nothing to do here... yet... remove "xxx-" to enable -->
+    </target>
+
+    <target name="sencha-audit"
+            description="Search from the current folder for Ext JS frameworks and report their license">
+        <x-script-def name="x-audit">
+            <script src="${cmd.dir}/extensions/sencha-licenses/getLicense.js"/>
+        <![CDATA[
+            var cwd = new File('.');
+            var visited = 0;
+
+            function progress (s) {
+                java.lang.System.out.print(s || '.');
+            }
+
+            var found = {
+                ext: {
+                    count: 0
+                },
+                touch: {
+                    count: 0
+                }
+            };
+
+            function scan (dir) {
+                ++visited;
+                if (visited % 10 === 0) {
+                    progress();
+                }
+
+                var license = getLicense(dir);
+
+                if (license) {
+                    //echo('Found ' + license.framework + ' / ' + license.type + ': ' + dir.getCanonicalPath());
+
+                    var bucket = found[license.framework];
+                    ++bucket.count;
+
+                    bucket = bucket[license.type] || (bucket[license.type] = []);
+                    bucket.push(dir.getCanonicalPath());
+                }
+                else {
+                    var files = dir.listFiles();
+
+                    for (var i = 0; i < files.length; ++i) {
+                        if (files[i].isDirectory()) {
+                            scan(files[i]);
+                        }
+                    }
+                }
+            }
+
+            function report () {
+                if (found.ext.count || found.touch.count) {
+                    for (var name in found.ext) {
+                        if (name !== 'count') {
+                            reportBucket('Ext JS', name, found.ext[name]);
+                        }
+                    }
+
+                    for (var name in found.touch) {
+                        if (name !== 'count') {
+                            reportBucket('Sencha Touch', name, found.touch[name]);
+                        }
+                    }
+                }
+                else {
+                    echo('No copies of Ext JS or Sencha Touch found at:');
+                    echo(cwd.getCanonicalPath());
+                    echo('');
+                }
+            }
+
+            function reportBucket (framework, name, bucket) {
+                var n = bucket.length;
+
+                echo(framework + ' [' + name + ' License] (' + n + ')');
+                echo('');
+
+                for (var i = 0; i < n; ++i) {
+                    echo('    ' + bucket[i]);
+                }
+
+                echo('');
+            }
+
+            echo('');
+
+            progress('Searching');
+            scan(cwd);
+
+            echo('');
+            echo('');
+
+            report();
+        ]]>
+        </x-script-def>
+        <x-audit/>
+    </target>
+
+    <target name="-before-app-build">
+        <x-script-def name="x-gpl-info">
+            <script src="${cmd.dir}/extensions/sencha-licenses/getLicense.js"/>
+        <![CDATA[
+            var dir = new File(project.getProperty('framework.dir'));
+            var license = getLicense(dir);
+
+            if (license && license.type == 'GPL') {
+                var logger = com.sencha.logging.SenchaLogManager.getLogger('audit');
+                var frameworkName = (license.framework === 'touch') ? 'Sencha Touch' : 'Ext JS';
+                var ver = project.getProperty('framework.version');
+
+                logger.info(['Using GPL Version of', frameworkName, 'version', ver, 'from', dir.getAbsolutePath() + '.'].join(' '));
+                logger.info('The implications of using GPL version can be found here (http://www.sencha.com/products/extjs/licensing).');
+            }
+        ]]>
+        </x-script-def>
+        <x-gpl-info/>
+    </target>
+
+</project>
