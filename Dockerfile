@@ -24,10 +24,8 @@ RUN mvn package
 
 RUN mkdir /traccar-packages
 
-RUN git checkout v3.3
-
 CMD mvn package \
 && cd setup \
 && mv -v /traccar_package_dependencies/* . \
-&& ./package.sh 3.3 \
+&& ./package.sh 3.4 \
 && mv -v traccar-*.zip /traccar-packages/
