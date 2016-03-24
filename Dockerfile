@@ -2,8 +2,6 @@ FROM java:7
 
 RUN apt-get update && apt-get install -y maven wine makeself innoextract zip && apt-get clean
 
-RUN git clone https://github.com/tananaev/traccar.git
-
 WORKDIR /traccar
 
 COPY ext-6.0.0 /ext-6.0.0
