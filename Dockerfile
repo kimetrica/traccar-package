@@ -16,6 +16,9 @@ COPY isetup-5.5.3.exe /traccar_package_dependencies/
 # Add Sencha Cmd to PATH
 ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/Sencha/Cmd/6.0.2.14
 
+# to allow mvn package
+COPY pom.xml /traccar/pom.xml
+
 # run mvn package once on build time, will save much time because packages
 # are already pulled by maven
 RUN mvn package
